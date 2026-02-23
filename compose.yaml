@@ -1,0 +1,7 @@
+﻿services:
+  onlyspans.targetscontoller:
+    image: onlyspans.targetscontoller
+    build:
+      context: .
+      dockerfile: Onlyspans.TargetsContoller/Dockerfile
+
