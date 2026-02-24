@@ -4,31 +4,39 @@ package targets;
 
 option csharp_namespace = "Targets.Communication";
 
-// Client contract for Targets Controller
-// Worker calls this service to execute deployments on targets
-// Architecture reference: https://github.com/onlyspans/issues/blob/nikitakaralius/platform-arch/arch/target-arch.md
 service TargetsService {
-  // Execute deployment on target
-  // Returns server stream of execution results
-  rpc ExecuteOnTarget(TargetExecutionRequest) returns (stream ExecutionResult);
+  // BiDi stream: Worker sends metadata + snapshot chunks, TC streams execution results back.
+  // Protocol: first message must be DeploymentMetadata, then one or more SnapshotChunk messages.
+  rpc ExecuteOnTarget(stream DeploymentInput) returns (stream ExecutionResult);
 }
 
-// Request sent from Worker to Targets Controller
-message TargetExecutionRequest {
+// Streamed from Worker to TC
+message DeploymentInput {
+  oneof payload {
+    DeploymentMetadata metadata = 1;    // must be first message
+    SnapshotChunk snapshot_chunk = 2;   // subsequent messages
+  }
+}
+
+message DeploymentMetadata {
   string deployment_id = 1;
   string target_id = 2;
-  string target_type = 3;  // "ssh", "kubernetes", etc.
-  string snapshot_path = 4;  // Local path to downloaded snapshot
-  map<string, string> environment_variables = 5;  // Pre-resolved variables
+  string target_type = 3;
+  map<string, string> environment_variables = 4;
 }
 
-// Execution result streamed from Targets Controller back to Worker
+message SnapshotChunk {
+  bytes data = 1;
+  bool is_last = 2;
+}
+
+// Streamed from TC to Worker
 message ExecutionResult {
   string deployment_id = 1;
-  int64 timestamp = 2;  // Unix timestamp in milliseconds
+  int64 timestamp = 2;
   ResultType type = 3;
   string message = 4;
-  optional bytes data = 5;  // Optional binary data (e.g., artifacts)
+  optional bytes data = 5;
 }
 
 enum ResultType {

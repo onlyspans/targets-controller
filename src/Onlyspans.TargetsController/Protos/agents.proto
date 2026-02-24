@@ -7,7 +7,8 @@ option csharp_namespace = "Agents.Communication";
 service AgentService {
   // Agent establishes BiDi stream on startup and holds it for its lifetime.
   // First message must be AgentRegistration.
-  // TC sends DeployCommand messages; agent responds with ExecutionLog and ExecutionCompleted.
+  // TC sends SnapshotChunk messages followed by a DeployCommand to trigger execution.
+  // Agent responds with ExecutionLog and ExecutionCompleted messages.
   rpc Connect(stream AgentMessage) returns (stream ControllerMessage);
 }
 
@@ -23,8 +24,9 @@ message AgentMessage {
 // Messages flowing from TC → Agent
 message ControllerMessage {
   oneof payload {
-    DeployCommand deploy = 1;
-    Ping ping = 2;
+    SnapshotChunk snapshot_chunk = 1;  // pushed before DeployCommand
+    DeployCommand deploy = 2;          // sent after final chunk (is_last=true)
+    Ping ping = 3;
   }
 }
 
@@ -34,9 +36,21 @@ message AgentRegistration {
   string version = 3;
 }
 
+message SnapshotChunk {
+  string deployment_id = 1;
+  bytes data = 2;
+  bool is_last = 3;
+}
+
+message DeployCommand {
+  string deployment_id = 1;
+  map<string, string> environment_variables = 2;
+  // no path or URL — snapshot already pushed via SnapshotChunk messages
+}
+
 message ExecutionLog {
   string deployment_id = 1;
-  int64 timestamp = 2;     // Unix milliseconds
+  int64 timestamp = 2;
   LogLevel level = 3;
   string message = 4;
 }
@@ -53,12 +67,6 @@ message ExecutionCompleted {
   string deployment_id = 1;
   bool success = 2;
   optional string error_message = 3;
-}
-
-message DeployCommand {
-  string deployment_id = 1;
-  string snapshot_path = 2;
-  map<string, string> environment_variables = 3;
 }
 
 message Ping {}
