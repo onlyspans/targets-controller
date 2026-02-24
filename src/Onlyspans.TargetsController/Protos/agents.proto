@@ -1,0 +1,64 @@
+syntax = "proto3";
+
+package agents;
+
+option csharp_namespace = "Agents.Communication";
+
+service AgentService {
+  // Agent establishes BiDi stream on startup and holds it for its lifetime.
+  // First message must be AgentRegistration.
+  // TC sends DeployCommand messages; agent responds with ExecutionLog and ExecutionCompleted.
+  rpc Connect(stream AgentMessage) returns (stream ControllerMessage);
+}
+
+// Messages flowing from Agent → TC
+message AgentMessage {
+  oneof payload {
+    AgentRegistration registration = 1;
+    ExecutionLog log = 2;
+    ExecutionCompleted completed = 3;
+  }
+}
+
+// Messages flowing from TC → Agent
+message ControllerMessage {
+  oneof payload {
+    DeployCommand deploy = 1;
+    Ping ping = 2;
+  }
+}
+
+message AgentRegistration {
+  string target_id = 1;
+  string agent_type = 2; // "vm" or "kubernetes"
+  string version = 3;
+}
+
+message ExecutionLog {
+  string deployment_id = 1;
+  int64 timestamp = 2;     // Unix milliseconds
+  LogLevel level = 3;
+  string message = 4;
+}
+
+enum LogLevel {
+  LOG_LEVEL_UNSPECIFIED = 0;
+  LOG_LEVEL_DEBUG = 1;
+  LOG_LEVEL_INFO = 2;
+  LOG_LEVEL_WARNING = 3;
+  LOG_LEVEL_ERROR = 4;
+}
+
+message ExecutionCompleted {
+  string deployment_id = 1;
+  bool success = 2;
+  optional string error_message = 3;
+}
+
+message DeployCommand {
+  string deployment_id = 1;
+  string snapshot_path = 2;
+  map<string, string> environment_variables = 3;
+}
+
+message Ping {}

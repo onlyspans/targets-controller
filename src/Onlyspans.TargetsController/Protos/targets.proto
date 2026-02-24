@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package targets;
+
+option csharp_namespace = "Targets.Communication";
+
+// Client contract for Targets Controller
+// Worker calls this service to execute deployments on targets
+// Architecture reference: https://github.com/onlyspans/issues/blob/nikitakaralius/platform-arch/arch/target-arch.md
+service TargetsService {
+  // Execute deployment on target
+  // Returns server stream of execution results
+  rpc ExecuteOnTarget(TargetExecutionRequest) returns (stream ExecutionResult);
+}
+
+// Request sent from Worker to Targets Controller
+message TargetExecutionRequest {
+  string deployment_id = 1;
+  string target_id = 2;
+  string target_type = 3;  // "ssh", "kubernetes", etc.
+  string snapshot_path = 4;  // Local path to downloaded snapshot
+  map<string, string> environment_variables = 5;  // Pre-resolved variables
+}
+
+// Execution result streamed from Targets Controller back to Worker
+message ExecutionResult {
+  string deployment_id = 1;
+  int64 timestamp = 2;  // Unix timestamp in milliseconds
+  ResultType type = 3;
+  string message = 4;
+  optional bytes data = 5;  // Optional binary data (e.g., artifacts)
+}
+
+enum ResultType {
+  RESULT_TYPE_UNSPECIFIED = 0;
+  RESULT_TYPE_LOG = 1;
+  RESULT_TYPE_PROGRESS = 2;
+  RESULT_TYPE_SUCCESS = 3;
+  RESULT_TYPE_ERROR = 4;
+}

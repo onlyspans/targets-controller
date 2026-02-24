@@ -1,7 +1,13 @@
-﻿services:
-  onlyspans.targetscontoller:
-    image: onlyspans.targetscontoller
+services:
+  targets-controller:
+    image: onlyspans.targets-controller
     build:
       context: .
-      dockerfile: Onlyspans.TargetsContoller/Dockerfile
-
+      dockerfile: src/Onlyspans.TargetsController/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+    ports:
+      - "5001:8080"
+    profiles:
+      - api
+      - all
