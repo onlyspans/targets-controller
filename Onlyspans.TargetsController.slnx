@@ -5,5 +5,7 @@
   <Folder Name="/src/">
     <Project Path="src/Onlyspans.TargetsController/Onlyspans.TargetsController.csproj" />
   </Folder>
-  <Folder Name="/tests/" />
+  <Folder Name="/tests/">
+    <Project Path="tests/Onlyspans.TargetsController.Tests/Onlyspans.TargetsController.Tests.csproj" />
+  </Folder>
 </Solution>
