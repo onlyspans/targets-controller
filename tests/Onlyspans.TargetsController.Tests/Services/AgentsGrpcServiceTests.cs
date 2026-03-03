@@ -30,8 +30,8 @@ public sealed class AgentsGrpcServiceTests
     private static AgentMessage Registration(string targetId) =>
         new() { Registration = new AgentRegistration { TargetId = targetId } };
 
-    private static AgentMessage Log(string deploymentId, string message, long timestamp = 0) =>
-        new() { Log = new ExecutionLog { DeploymentId = deploymentId, Message = message, Timestamp = timestamp } };
+    private static AgentMessage Log(string deploymentId, string message, long timestamp = 0, Agents.Communication.LogLevel level = Agents.Communication.LogLevel.Unspecified) =>
+        new() { Log = new ExecutionLog { DeploymentId = deploymentId, Message = message, Timestamp = timestamp, Level = level } };
 
     private static AgentMessage Completed(string deploymentId, bool success, string? error = null)
     {
@@ -89,6 +89,21 @@ public sealed class AgentsGrpcServiceTests
         await _sut.Connect(requestStream, responseStream, MakeContext());
 
         _registry.Received(1).PublishResult("d1", Arg.Is<ExecutionResult>(r => r.Timestamp == 12345L));
+    }
+
+    [Fact]
+    public async Task Connect_LogMessage_PreservesLogLevel()
+    {
+        var responseStream = new FakeServerStreamWriter<ControllerMessage>();
+        var requestStream = new FakeAsyncStreamReader<AgentMessage>([
+            Registration("t1"),
+            Log("d1", "msg", level: Agents.Communication.LogLevel.Warning),
+        ]);
+
+        await _sut.Connect(requestStream, responseStream, MakeContext());
+
+        _registry.Received(1).PublishResult("d1", Arg.Is<ExecutionResult>(r =>
+            r.LogLevel == Targets.Communication.LogLevel.Warning));
     }
 
     [Fact]

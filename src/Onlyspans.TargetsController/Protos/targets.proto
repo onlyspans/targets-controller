@@ -37,6 +37,7 @@ message ExecutionResult {
   ResultType type = 3;
   string message = 4;
   optional bytes data = 5;
+  optional LogLevel log_level = 6;
 }
 
 enum ResultType {
@@ -45,4 +46,12 @@ enum ResultType {
   RESULT_TYPE_PROGRESS = 2;
   RESULT_TYPE_SUCCESS = 3;
   RESULT_TYPE_ERROR = 4;
+}
+
+enum LogLevel {
+  LOG_LEVEL_UNSPECIFIED = 0;
+  LOG_LEVEL_DEBUG = 1;
+  LOG_LEVEL_INFO = 2;
+  LOG_LEVEL_WARNING = 3;
+  LOG_LEVEL_ERROR = 4;
 }

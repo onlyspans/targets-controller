@@ -46,7 +46,8 @@ public sealed class AgentsGrpcService(
                             DeploymentId = log.DeploymentId,
                             Timestamp = log.Timestamp,
                             Type = ResultType.Log,
-                            Message = log.Message
+                            Message = log.Message,
+                            LogLevel = (Targets.Communication.LogLevel)log.Level
                         });
                         break;
 
